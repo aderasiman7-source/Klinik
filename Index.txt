@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Praktik drg. Rasiman Ade Putra Rambe, M.Hkes — Reservasi Pasien</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html,body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+  </style>
+  <!-- React & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const clinicWA = "+6285275106161";
+    const SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxbZ22BDsy0_zTpt9L7_0ZIqiIt0-QD5OM9nokM1gfW4QjEciPgmQNzlDD3pFMwp4_m/exec";
+    const clinic_name = "Praktik drg. Rasiman Ade Putra Rambe, M.Hkes";
+
+    function normalizePhone(num) {
+      const digits = (num || "").replace(/\D/g, "");
+      if (digits.startsWith("62")) return digits;
+      if (digits.startsWith("0")) return "62" + digits.slice(1);
+      if (digits.startsWith("8")) return "62" + digits;
+      return digits;
+    }
+
+    function waLink(to, text) {
+      const digits = (to || "").replace(/\D/g, "");
+      return "https://wa.me/" + digits + "?text=" + encodeURIComponent(text);
+    }
+
+    function App() {
+      const [form, setForm] = React.useState({
+        name: "", phone: "", service: "Konsultasi Dokter Gigi",
+        date: "", time: "", notes: "", consent: false,
+      });
+      const [submitting, setSubmitting] = React.useState(false);
+      const [successPayload, setSuccessPayload] = React.useState(null);
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        if (!form.name.trim()) return alert("Nama wajib diisi");
+        if (!form.phone) return alert("Nomor HP wajib diisi");
+        if (!form.date) return alert("Tanggal wajib diisi");
+        if (!form.time) return alert("Jam wajib diisi");
+        if (!form.consent) return alert("Mohon centang kebijakan privasi");
+
+        const payload = { ...form, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+        setSubmitting(true);
+        try {
+          await fetch(SHEETS_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            mode: "no-cors"
+          });
+          setSuccessPayload(payload);
+          setForm({ ...form, name: "", phone: "", notes: "", time: "" });
+        } finally {
+          setSubmitting(false);
+        }
+      }
+
+      return (
+        <div className="max-w-2xl mx-auto p-6">
+          <h1 className="text-2xl font-bold mb-4">{clinic_name}</h1>
+          <p className="mb-6 text-slate-600">Reservasi pasien online (WhatsApp & Google Sheets)</p>
+
+          {successPayload && (
+            <div className="p-3 mb-4 bg-green-100 border border-green-300 rounded">
+              ✅ Reservasi tersimpan. Silakan kirim konfirmasi ke Admin via WhatsApp:
+              <a href={waLink(clinicWA, `Reservasi: ${successPayload.name}, ${successPayload.service}, ${successPayload.date} ${successPayload.time}`)}
+                 target="_blank" rel="noreferrer"
+                 className="ml-2 px-3 py-1 bg-green-600 text-white rounded">
+                Kirim WA
+              </a>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input type="text" placeholder="Nama Lengkap" className="w-full border p-2 rounded"
+              value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
+            <input type="tel" placeholder="Nomor HP (WA)" className="w-full border p-2 rounded"
+              value={form.phone} onChange={e=>setForm({...form, phone:e.target.value})} required />
+            <select className="w-full border p-2 rounded"
+              value={form.service} onChange={e=>setForm({...form, service:e.target.value})}>
+              <option>Konsultasi Umum</option>
+              <option>Konsultasi Dokter Gigi</option>
+              <option>Scaling / Pembersihan Karang Gigi</option>
+              <option>Tambal Gigi</option>
+              <option>Cabut Gigi</option>
+            </select>
+            <input type="date" className="w-full border p-2 rounded"
+              value={form.date} onChange={e=>setForm({...form, date:e.target.value})} required />
+            <input type="time" className="w-full border p-2 rounded"
+              value={form.time} onChange={e=>setForm({...form, time:e.target.value})} required />
+            <textarea placeholder="Catatan (opsional)" className="w-full border p-2 rounded"
+              value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}></textarea>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.consent}
+                onChange={e=>setForm({...form, consent:e.target.checked})}/>
+              Setuju dengan kebijakan privasi
+            </label>
+            <button type="submit" disabled={submitting}
+              className="w-full bg-slate-900 text-white py-2 rounded">
+              {submitting ? "Mengirim…" : "Kirim Reservasi"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-sm text-slate-500">
+            <p>Alamat: Langsa, Aceh</p>
+            <p>Jam Praktik: 16.00 – 21.30 WIB</p>
+            <p>WhatsApp Admin: {clinicWA}</p>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
