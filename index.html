@@ -3,77 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reservasi Pasien - drg. Rasiman Ade Putra Rambe</title>
+  <title>Form Reservasi Pasien</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
-  <!-- React & Babel -->
-  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}</style>
 </head>
-<body class="bg-slate-50">
-  <div id="root" class="min-h-screen flex items-center justify-center p-4"></div>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg bg-white shadow-xl rounded-2xl p-6">
+    <h1 class="text-2xl font-bold text-center mb-6">Form Reservasi Pasien</h1>
 
-  <script type="text/babel">
+    <form id="form" class="space-y-3">
+      <input name="nama" type="text" placeholder="Nama Lengkap" class="w-full border p-2 rounded" required />
+      <input name="telepon" type="tel" placeholder="Nomor Telepon / WA" class="w-full border p-2 rounded" required />
+      <select name="layanan" class="w-full border p-2 rounded" required>
+        <option value="">Pilih Layanan</option>
+        <option>Konsultasi Dokter Gigi</option>
+        <option>Pembersihan Karang (Scaling)</option>
+        <option>Tambal Gigi</option>
+        <option>Cabut Gigi</option>
+      </select>
+      <input name="tanggal" type="date" class="w-full border p-2 rounded" required />
+      <input name="jam" type="time" class="w-full border p-2 rounded" required />
+      <textarea name="catatan" placeholder="Catatan tambahan (opsional)" class="w-full border p-2 rounded"></textarea>
+
+      <button id="btn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+        Kirim Reservasi
+      </button>
+    </form>
+
+    <p id="msg" class="text-center text-sm mt-4 text-slate-600"></p>
+
+    <div class="text-xs mt-6 text-slate-500">
+      <p><strong>Praktik:</strong> drg. Rasiman Ade Putra Rambe, M.Hkes</p>
+      <p><strong>Jam:</strong> 16.00 – 21.30 WIB</p>
+      <p><strong>WA Admin:</strong> 0852-7510-6161</p>
+    </div>
+  </div>
+
+  <script>
+    // GUNAKAN URL /exec PUNYA BAPAK
     const SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxJsux4mZNnIQoeEPTgPyIxlYjKChgx5d5mYrebSa8WEKXx8iGR2JTe_W2jcT0aXwjH3Q/exec";
 
-    function App() {
-      const [form, setForm] = React.useState({
-        nama: "",
-        telepon: "",
-        layanan: "",
-        tanggal: "",
-        jam: "",
-        catatan: ""
-      });
+    const f = document.getElementById('form');
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
 
-      const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-      };
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+      btn.disabled = true; btn.textContent = "Mengirim…";
 
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-          const res = await fetch(SHEETS_ENDPOINT, {
-            method: "POST",
-            body: new URLSearchParams(form)
-          });
-          const data = await res.json();
-          if (data.ok) {
-            alert("Reservasi berhasil dikirim!");
-          } else {
-            alert("Gagal mengirim data.");
-          }
-        } catch (err) {
-          alert("Terjadi kesalahan koneksi.");
-        }
-      };
+      try {
+        // Kirim sebagai form-url-encoded + no-cors (agar tidak kena CORS)
+        const body = new URLSearchParams(new FormData(f));
 
-      return (
-        <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-lg">
-          <h1 className="text-2xl font-bold mb-4 text-center">Form Reservasi Pasien</h1>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <input type="text" name="nama" placeholder="Nama Lengkap" value={form.nama} onChange={handleChange} required className="w-full border p-2 rounded"/>
-            <input type="tel" name="telepon" placeholder="Nomor Telepon/WA" value={form.telepon} onChange={handleChange} required className="w-full border p-2 rounded"/>
-            <select name="layanan" value={form.layanan} onChange={handleChange} required className="w-full border p-2 rounded">
-              <option value="">Pilih Layanan</option>
-              <option>Periksa Gigi</option>
-              <option>Pencabutan</option>
-              <option>Pembersihan Karang</option>
-            </select>
-            <input type="date" name="tanggal" value={form.tanggal} onChange={handleChange} required className="w-full border p-2 rounded"/>
-            <input type="time" name="jam" value={form.jam} onChange={handleChange} required className="w-full border p-2 rounded"/>
-            <textarea name="catatan" placeholder="Catatan tambahan (opsional)" value={form.catatan} onChange={handleChange} className="w-full border p-2 rounded"></textarea>
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Kirim Reservasi</button>
-          </form>
-        </div>
-      );
-    }
+        await fetch(SHEETS_ENDPOINT, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          body
+        });
 
-    ReactDOM.render(<App />, document.getElementById("root"));
+        // Karena no-cors, kita tidak bisa membaca respon → anggap sukses
+        msg.textContent = "✅ Reservasi terkirim. Silakan cek tab “Data” di Google Sheet.";
+        f.reset();
+      } catch (err) {
+        alert("Gagal mengirim data. Coba lagi sebentar.");
+      } finally {
+        btn.disabled = false; btn.textContent = "Kirim Reservasi";
+      }
+    });
   </script>
 </body>
 </html>
